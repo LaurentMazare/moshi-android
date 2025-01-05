@@ -7,6 +7,7 @@ use eframe::egui;
 use std::sync::{Arc, Mutex};
 
 const BRIA_CODES: &[u8] = include_bytes!("../assets/bria.safetensors");
+const MODEL_PTE: &[u8] = include_bytes!("../assets/model.pte");
 
 pub struct PcmOutBuffer {
     pcm: Arc<Mutex<Vec<f32>>>,
@@ -200,9 +201,8 @@ impl MyApp {
     }
 
     fn run_executorch(&self) -> Result<()> {
-        #[cfg(feature = "executorch")]
         {
-            let program = xctch::Program::from_file("model.pte")?;
+            let program = xctch::Program::from_buffer(MODEL_PTE.to_vec())?;
             let mut method = program.method("forward")?;
             let mut tensor = xctch::Tensor::from_data(vec![1.23f32]);
             log::info!("{}", tensor.nbytes());
