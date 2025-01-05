@@ -55,6 +55,9 @@ fn android_main(app: winit::platform::android::activity::AndroidApp) {
     use android_logger::Config;
     android_logger::init_once(Config::default().with_max_level(log::LevelFilter::Info));
 
+    #[cfg(feature = "executorch")]
+    xctch::et_pal_init();
+
     log::info!("requesting permissions");
     if let Err(err) = req_perm(&app) {
         log::error!("error requesting perm: {err:?}")

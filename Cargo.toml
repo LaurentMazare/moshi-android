@@ -30,6 +30,11 @@ egui_extras = { version = "0.30", features = ["default", "image"] }
 log = "0.4"
 winit = "0.30"
 android_logger = "0.14"
+xctch = { version = "0.2.0", optional = true }
+
+[features]
+default = []
+executorch = ["dep:xctch"]
 
 [dependencies.oboe]
 version = "0.6.1"
@@ -44,7 +49,7 @@ anyhow = "1.0"
 vergen = { version = "8.3.1", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
 
 [package.metadata.android]
-build_targets = ["armv7-linux-androideabi", "aarch64-linux-android"]
+build_targets = ["aarch64-linux-android"]
 uses_permission = [
     { name = "android.permission.WRITE_EXTERNAL_STORAGE" },
     { name = "android.permission.INTERNET" },
