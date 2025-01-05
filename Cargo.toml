@@ -1,0 +1,66 @@
+[package]
+name = "moshi"
+version = "0.1.0"
+authors = ["Laurent Mazare <laurent.mazare@gmail.com>"]
+license = "MIT OR Apache-2.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+
+[dependencies]
+eframe = { version = "0.30", features = ["default", "android-native-activity"] }
+rubato = "0.16.1"
+symphonia = { version = "0.5.3", features = ["all"] }
+ndk-context = "0.1.1"
+jni = "0.21.1"
+hf-hub = "0.4.1"
+openssl = { version = "*", features = ["vendored"] }
+candle = { version = "0.8.1", package = "candle-core" }
+candle-nn = "0.8.1"
+candle-transformers = "0.8.1"
+anyhow = "1"
+
+
+# For image support:
+egui_extras = { version = "0.30", features = ["default", "image"] }
+
+log = "0.4"
+winit = "0.30"
+android_logger = "0.14"
+
+[dependencies.oboe]
+version = "0.6.1"
+features = [
+  #"generate-bindings",
+  "java-interface",
+  "shared-stdcxx",
+]
+
+[build-dependencies]
+anyhow = "1.0"
+vergen = { version = "8.3.1", features = ["build", "cargo", "git", "gitcl", "rustc", "si"] }
+
+[package.metadata.android]
+build_targets = ["armv7-linux-androideabi", "aarch64-linux-android"]
+uses_permission = [
+    { name = "android.permission.WRITE_EXTERNAL_STORAGE" },
+    { name = "android.permission.INTERNET" },
+    { name = "android.permission.ACCESS_NETWORK_STATE" },
+    { name = "android.permission.FOREGROUND_SERVICE_MICROPHONE" },
+    { name = "android.permission.RECORD_AUDIO" }
+]
+uses_feature = [
+  { name = "android.hardware.audio.output" },
+  { name = "android.hardware.microphone" },
+  { name = "android.hardware.audio.low_latency" }
+]
+
+[package.metadata.android.sdk]
+target_sdk_version = 33
+
+[package.metadata.android.signing.release]
+path = "./my.keystore"
+keystore_password = "android"
