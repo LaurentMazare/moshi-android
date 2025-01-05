@@ -198,6 +198,27 @@ impl MyApp {
         self.record_stream = Some(stream);
         Ok(())
     }
+
+    fn run_executorch(&self) -> Result<()> {
+        #[cfg(feature = "executorch")]
+        {
+            let program = xctch::Program::from_file("model.pte")?;
+            let mut method = program.method("forward")?;
+            let mut tensor = xctch::Tensor::from_data(vec![1.23f32]);
+            log::info!("{}", tensor.nbytes());
+            let evalue = tensor.as_evalue();
+            method.set_input(&evalue, 0)?;
+            method.set_input(&evalue, 1)?;
+            unsafe { method.execute()? };
+            let out = method.get_output(0);
+            log::info!("{}", out.is_tensor());
+            let out = out.as_tensor().unwrap();
+            log::info!("{:?}", out.scalar_type());
+            let out = out.as_slice::<f32>().unwrap().to_vec();
+            log::info!("{out:?}");
+        }
+        Ok(())
+    }
 }
 
 impl eframe::App for MyApp {
@@ -215,6 +236,11 @@ impl eframe::App for MyApp {
             }
             if ui.button("Record").clicked() {
                 if let Err(err) = self.start_record() {
+                    self.status = format!("err {err:?}")
+                }
+            }
+            if ui.button("executorch").clicked() {
+                if let Err(err) = self.run_executorch() {
                     self.status = format!("err {err:?}")
                 }
             }
