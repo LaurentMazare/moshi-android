@@ -201,6 +201,7 @@ impl MyApp {
     }
 
     fn run_executorch(&self) -> Result<()> {
+        #[cfg(feature = "executorch")]
         {
             let program = xctch::Program::from_buffer(MODEL_PTE.to_vec())?;
             let mut method = program.method("forward")?;
