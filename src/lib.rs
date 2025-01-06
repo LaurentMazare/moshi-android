@@ -200,7 +200,7 @@ impl MyApp {
         Ok(())
     }
 
-    fn run_executorch(&self) -> Result<()> {
+    fn run_executorch_basic(&self) -> Result<()> {
         #[cfg(feature = "executorch")]
         {
             let program = xctch::Program::from_buffer(MODEL_PTE.to_vec())?;
@@ -217,6 +217,46 @@ impl MyApp {
             log::info!("{:?}", out.scalar_type());
             let out = out.as_slice::<f32>().unwrap().to_vec();
             log::info!("{out:?}");
+        }
+        Ok(())
+    }
+
+    fn run_executorch_300m(&self) -> Result<()> {
+        let cache_dir = get_cache_dir()?;
+        let api =
+            hf_hub::api::sync::ApiBuilder::from_cache(hf_hub::Cache::new(cache_dir.to_path_buf()))
+                .build()?;
+        let model = api.model("lmz/moshi-swift".to_string());
+        log::info!("retrieving weights");
+        let model = model.get("moshi-lm-300m-q.pte")?;
+        log::info!("retrieving weights done");
+        #[cfg(feature = "executorch")]
+        {
+            use xctch::Context;
+
+            let program = xctch::Program::from_file(&model)?;
+            let mut method = program.method("forward")?;
+            log::info!(
+                "loaded method, inputs {}, outputs {}",
+                method.inputs_size(),
+                method.outputs_size()
+            );
+            for idx in 0..method.outputs_size() {
+                log::info!("  out {idx}: {:?}", method.get_output(idx).tag())
+            }
+            for idx in 0..20 {
+                let start = std::time::Instant::now();
+                let mut tensor = xctch::Tensor::from_data_with_dims(vec![0i64; 17], &[1, 17, 1])?;
+                let evalue = tensor.as_evalue();
+                method.set_input(&evalue, 0)?;
+                unsafe { method.execute()? };
+                let logits = method.get_output(0);
+                let logits = logits.as_tensor().context("not a tensor")?;
+                log::info!("out {idx} {:?}", logits.shape());
+                let logits = logits.as_slice::<f32>().context("expected f32")?;
+                log::info!("  {:?}", &logits[..10]);
+                log::info!("forward step in {:?}", start.elapsed());
+            }
         }
         Ok(())
     }
@@ -240,8 +280,13 @@ impl eframe::App for MyApp {
                     self.status = format!("err {err:?}")
                 }
             }
-            if ui.button("executorch").clicked() {
-                if let Err(err) = self.run_executorch() {
+            if ui.button("executorch basic").clicked() {
+                if let Err(err) = self.run_executorch_basic() {
+                    self.status = format!("err {err:?}")
+                }
+            }
+            if ui.button("executorch 300m").clicked() {
+                if let Err(err) = self.run_executorch_300m() {
                     self.status = format!("err {err:?}")
                 }
             }
